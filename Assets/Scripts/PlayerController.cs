@@ -6,10 +6,11 @@ public class PlayerController : MonoBehaviour
 {
 
     private CharacterController controller;
-    /*[SerializeField]*/ private Vector3 direction;
+    private Vector3 direction;
     [SerializeField] private int speed;
     [SerializeField] private float jumpForce;
     [SerializeField] private float gravity;
+    [SerializeField] private GameObject _losePanel;
 
     private int lineToMove = 1;
     public float lineDistance = 4;
@@ -46,7 +47,16 @@ public class PlayerController : MonoBehaviour
         else if (lineToMove == 2)
             targetPosition += Vector3.right * lineDistance;
 
-        transform.position = targetPosition;
+        if (transform.position == targetPosition)
+            return;
+        Vector3 diff = targetPosition - transform.position;
+        Vector3 moveDir = diff.normalized * 25 * Time.deltaTime;
+        if (moveDir.sqrMagnitude < diff.sqrMagnitude)
+            controller.Move(moveDir);
+        else
+            controller.Move(diff);
+        
+
     }
 
     private void Jump()
@@ -54,11 +64,20 @@ public class PlayerController : MonoBehaviour
         direction.y = jumpForce;
     }
 
-    // Update is called once per frame
     void FixedUpdate()
     {
         direction.z = speed;
         direction.y += gravity * Time.fixedDeltaTime;
         controller.Move(direction * Time.fixedDeltaTime);
     }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (hit.gameObject.tag == "obstacle")
+        {
+            _losePanel.SetActive(true);
+            Time.timeScale = 0;
+        }
+    }
+
 }
