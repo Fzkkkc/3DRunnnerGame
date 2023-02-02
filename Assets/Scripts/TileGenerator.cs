@@ -16,6 +16,8 @@ public class TileGenerator : MonoBehaviour
     {
         for (int i = 0; i < startTiles; i++)
         {
+            if (i == 0)
+                SpawnTile(3);
             SpawnTile(Random.Range(0, tilePrefabs.Length));
         }
     }

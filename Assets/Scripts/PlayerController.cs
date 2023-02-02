@@ -1,74 +1,80 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
 
-    private CharacterController controller;
-    private Vector3 direction;
-    [SerializeField] private int speed;
-    [SerializeField] private float jumpForce;
-    [SerializeField] private float gravity;
+    private CharacterController _controller;
+    private Vector3 _direction;
+    [SerializeField] private float _speed;
+    [SerializeField] private float _jumpForce;
+    [SerializeField] private float _gravity;
+    [SerializeField] private int _coinsCount;
     [SerializeField] private GameObject _losePanel;
+    [SerializeField] private Text _coinsText;
 
-    private int lineToMove = 1;
-    public float lineDistance = 4;
+    private int _lineToMove = 1;
+    public float LineDistance = 4;
+    private const float _maxSpeed = 110;
 
     // Start is called before the first frame update
     void Start()
     {
-        controller = GetComponent<CharacterController>();
+        _controller = GetComponent<CharacterController>();
+        StartCoroutine(SpeedIncrease());
     }
 
     private void Update()
     {
         if (SwipeController.swipeRight)
         {
-            if (lineToMove < 2)
-                lineToMove++;
+            if (_lineToMove < 2)
+                _lineToMove++;
         }
 
         if (SwipeController.swipeLeft)
         {
-            if (lineToMove > 0)
-                lineToMove--;
+            if (_lineToMove > 0)
+                _lineToMove--;
         }
 
         if (SwipeController.swipeUp)
         {
-            if(controller.isGrounded)
+            if(_controller.isGrounded)
                 Jump();
         }
 
         Vector3 targetPosition = transform.position.z * transform.forward + transform.position.y * transform.up;
-        if (lineToMove == 0)
-            targetPosition += Vector3.left * lineDistance;
-        else if (lineToMove == 2)
-            targetPosition += Vector3.right * lineDistance;
+
+        if (_lineToMove == 0)
+            targetPosition += Vector3.left * LineDistance;
+        else if (_lineToMove == 2)
+            targetPosition += Vector3.right * LineDistance;
 
         if (transform.position == targetPosition)
             return;
+
         Vector3 diff = targetPosition - transform.position;
         Vector3 moveDir = diff.normalized * 25 * Time.deltaTime;
-        if (moveDir.sqrMagnitude < diff.sqrMagnitude)
-            controller.Move(moveDir);
-        else
-            controller.Move(diff);
-        
 
+        if (moveDir.sqrMagnitude < diff.sqrMagnitude)
+            _controller.Move(moveDir);
+        else
+            _controller.Move(diff);
     }
 
     private void Jump()
     {
-        direction.y = jumpForce;
+        _direction.y = _jumpForce;
     }
 
     void FixedUpdate()
     {
-        direction.z = speed;
-        direction.y += gravity * Time.fixedDeltaTime;
-        controller.Move(direction * Time.fixedDeltaTime);
+        _direction.z = _speed;
+        _direction.y += _gravity * Time.fixedDeltaTime;
+        _controller.Move(_direction * Time.fixedDeltaTime);
     }
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
@@ -80,4 +86,23 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if(other.gameObject.tag == "Coin")
+        {
+            _coinsCount++;
+            _coinsText.text = _coinsCount.ToString();
+            Destroy(other.gameObject);
+        }
+    }
+
+    private IEnumerator SpeedIncrease()
+    {
+        yield return new WaitForSeconds(1);
+        if(_speed < _maxSpeed)
+        {
+            _speed += 1;
+            StartCoroutine(SpeedIncrease());
+        }
+    }
 }
