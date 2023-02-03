@@ -4,44 +4,43 @@ using UnityEngine;
 
 public class TileGenerator : MonoBehaviour
 {
-    public GameObject[] tilePrefabs;
-    private List<GameObject> activeTiles = new List<GameObject>();
-    private float spawnPos = 0;
-    private float tileLenght = 81;
+    public GameObject[] TilePrefabs;
+    private List<GameObject> _activeTiles = new List<GameObject>();
+    private float _spawnPos = 0;
+    private float _tileLenght = 81;
 
-    [SerializeField] private Transform player;
-    private int startTiles = 6;
+    [SerializeField] private Transform _player;
+    private int _startTiles = 6;
 
     void Start()
     {
-        for (int i = 0; i < startTiles; i++)
+        for (int i = 0; i < _startTiles; i++)
         {
             if (i == 0)
                 SpawnTile(3);
-            SpawnTile(Random.Range(0, tilePrefabs.Length));
+            SpawnTile(Random.Range(0, TilePrefabs.Length));
         }
     }
 
     void Update()
     {
-        if (player.position.z - 60> spawnPos - (startTiles * tileLenght))
+        if (_player.position.z - 60> _spawnPos - (_startTiles * _tileLenght))
         {
-            SpawnTile(Random.Range(0, tilePrefabs.Length));
+            SpawnTile(Random.Range(0, TilePrefabs.Length));
             DeleteTile();
-        }
-            
+        }        
     }
     
     private void SpawnTile(int tileIndex)
     {
-        GameObject nextTile = Instantiate(tilePrefabs[tileIndex], transform.forward * spawnPos, transform.rotation);
-        activeTiles.Add(nextTile);
-        spawnPos += tileLenght;
+        GameObject nextTile = Instantiate(TilePrefabs[tileIndex], transform.forward * _spawnPos, transform.rotation);
+        _activeTiles.Add(nextTile);
+        _spawnPos += _tileLenght;
     }
 
     private void DeleteTile()
     {
-        Destroy(activeTiles[0]);
-        activeTiles.RemoveAt(0);
+        Destroy(_activeTiles[0]);
+        _activeTiles.RemoveAt(0);
     }
 }

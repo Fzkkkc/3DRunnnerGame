@@ -5,8 +5,8 @@ using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
-
     private CharacterController _controller;
+    private CapsuleCollider _capsuleCollider;
     private Vector3 _direction;
     [SerializeField] private float _speed;
     [SerializeField] private float _jumpForce;
@@ -14,36 +14,44 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private int _coinsCount;
     [SerializeField] private GameObject _losePanel;
     [SerializeField] private Text _coinsText;
-
+    [SerializeField] private Score _scoreScript;
     private int _lineToMove = 1;
     public float LineDistance = 4;
     private const float _maxSpeed = 110;
 
-    // Start is called before the first frame update
     void Start()
     {
         _controller = GetComponent<CharacterController>();
+        _capsuleCollider = GetComponent<CapsuleCollider>();
+        Time.timeScale = 1;
+        _coinsCount = PlayerPrefs.GetInt("_coinsCount");
+        _coinsText.text = _coinsCount.ToString();
         StartCoroutine(SpeedIncrease());
     }
 
     private void Update()
     {
-        if (SwipeController.swipeRight)
+        if (SwipeController.SwipeRight)
         {
             if (_lineToMove < 2)
                 _lineToMove++;
         }
 
-        if (SwipeController.swipeLeft)
+        if (SwipeController.SwipeLeft)
         {
             if (_lineToMove > 0)
                 _lineToMove--;
         }
 
-        if (SwipeController.swipeUp)
+        if (SwipeController.SwipeUp)
         {
             if(_controller.isGrounded)
                 Jump();
+        }
+
+        if (SwipeController.SwipeDown)
+        {
+            StartCoroutine(Slide());
         }
 
         Vector3 targetPosition = transform.position.z * transform.forward + transform.position.y * transform.up;
@@ -82,6 +90,8 @@ public class PlayerController : MonoBehaviour
         if (hit.gameObject.tag == "obstacle")
         {
             _losePanel.SetActive(true);
+            int lastRunScore = int.Parse(_scoreScript.ScoreText.text.ToString());
+            PlayerPrefs.SetInt("lastRunScore", lastRunScore);
             Time.timeScale = 0;
         }
     }
@@ -91,6 +101,7 @@ public class PlayerController : MonoBehaviour
         if(other.gameObject.tag == "Coin")
         {
             _coinsCount++;
+            PlayerPrefs.SetInt("_coinsCount", _coinsCount);
             _coinsText.text = _coinsCount.ToString();
             Destroy(other.gameObject);
         }
@@ -104,5 +115,16 @@ public class PlayerController : MonoBehaviour
             _speed += 1;
             StartCoroutine(SpeedIncrease());
         }
+    }
+
+    private IEnumerator Slide()
+    {
+        _capsuleCollider.center = new Vector3(0, -0.8f, 0);
+        _capsuleCollider.height = 1;
+
+        yield return new WaitForSeconds(1);
+
+        _capsuleCollider.center = new Vector3(0, 0, 0);
+        _capsuleCollider.height = 2;
     }
 }
