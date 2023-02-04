@@ -7,9 +7,12 @@ public class Score : MonoBehaviour
 {
     [SerializeField] private Transform _player;
     [SerializeField] public Text ScoreText;
+    private int _totalScore;
+    public int ScoreMultiplier;
 
     void Update()
     {
-        ScoreText.text = ((int)(_player.position.z / 2)).ToString();
+        _totalScore += ScoreMultiplier;
+        ScoreText.text = _totalScore.ToString();
     }
 }

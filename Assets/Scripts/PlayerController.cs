@@ -8,25 +8,34 @@ public class PlayerController : MonoBehaviour
     private CharacterController _controller;
     private CapsuleCollider _capsuleCollider;
     private Vector3 _direction;
+    private Score _score;
     [SerializeField] private float _speed;
     [SerializeField] private float _jumpForce;
     [SerializeField] private float _gravity;
     [SerializeField] private int _coinsCount;
     [SerializeField] private GameObject _losePanel;
+    [SerializeField] private GameObject _scoreText;
     [SerializeField] private Text _coinsText;
     [SerializeField] private Score _scoreScript;
     private int _lineToMove = 1;
     public float LineDistance = 4;
     private const float _maxSpeed = 110;
+    private bool _slide;
+    private bool _isInShield;
+    private Animator _anim;
 
     void Start()
     {
         _controller = GetComponent<CharacterController>();
         _capsuleCollider = GetComponent<CapsuleCollider>();
+        _anim = GetComponent<Animator>();
+        _score = _scoreText.GetComponent<Score>();
+        _score.ScoreMultiplier = 1; 
         Time.timeScale = 1;
         _coinsCount = PlayerPrefs.GetInt("_coinsCount");
         _coinsText.text = _coinsCount.ToString();
         StartCoroutine(SpeedIncrease());
+        _isInShield = false;
     }
 
     private void Update()
@@ -54,6 +63,11 @@ public class PlayerController : MonoBehaviour
             StartCoroutine(Slide());
         }
 
+        if (_controller.isGrounded && !_slide)
+            _anim.SetBool("IsRunning", true);
+        else
+            _anim.SetBool("IsRunning", false);
+
         Vector3 targetPosition = transform.position.z * transform.forward + transform.position.y * transform.up;
 
         if (_lineToMove == 0)
@@ -76,6 +90,7 @@ public class PlayerController : MonoBehaviour
     private void Jump()
     {
         _direction.y = _jumpForce;
+        _anim.SetTrigger("Jump");
     }
 
     void FixedUpdate()
@@ -89,10 +104,15 @@ public class PlayerController : MonoBehaviour
     {
         if (hit.gameObject.tag == "obstacle")
         {
-            _losePanel.SetActive(true);
-            int lastRunScore = int.Parse(_scoreScript.ScoreText.text.ToString());
-            PlayerPrefs.SetInt("lastRunScore", lastRunScore);
-            Time.timeScale = 0;
+            if (_isInShield)
+                Destroy(hit.gameObject);
+            else
+            {
+                _losePanel.SetActive(true);
+                int lastRunScore = int.Parse(_scoreScript.ScoreText.text.ToString());
+                PlayerPrefs.SetInt("lastRunScore", lastRunScore);
+                Time.timeScale = 0;
+            }
         }
     }
 
@@ -103,6 +123,18 @@ public class PlayerController : MonoBehaviour
             _coinsCount++;
             PlayerPrefs.SetInt("_coinsCount", _coinsCount);
             _coinsText.text = _coinsCount.ToString();
+            Destroy(other.gameObject);
+        }
+
+        if (other.gameObject.tag == "BonusStar")
+        {
+            StartCoroutine(BonusStar());
+            Destroy(other.gameObject);
+        }
+
+        if (other.gameObject.tag == "BonusShield")
+        {
+            StartCoroutine(BonusShield());
             Destroy(other.gameObject);
         }
     }
@@ -121,10 +153,26 @@ public class PlayerController : MonoBehaviour
     {
         _capsuleCollider.center = new Vector3(0, -0.8f, 0);
         _capsuleCollider.height = 1;
+        _anim.SetTrigger("Slide");
 
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(2);
 
         _capsuleCollider.center = new Vector3(0, 0, 0);
         _capsuleCollider.height = 2;
+        _slide = false;
+    }
+
+    private IEnumerator BonusStar()
+    {
+        _score.ScoreMultiplier = 2;
+        yield return new WaitForSeconds(5);
+        _score.ScoreMultiplier = 1;
+    }
+
+    private IEnumerator BonusShield()
+    {
+        _isInShield = true;
+        yield return new WaitForSeconds(5);
+        _isInShield = false;
     }
 }
